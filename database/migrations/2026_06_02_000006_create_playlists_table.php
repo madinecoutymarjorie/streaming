@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('titre');
             
             // Clé étrangère pointant vers l'utilisateur créateur
-            $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cascade');
+            $table->foreignId('utilisateur_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

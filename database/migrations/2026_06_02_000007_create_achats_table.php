@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('achats', function (Blueprint $table) {
             $table->id(); // Optionnel mais recommandé pour un historique
-            $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cascade');
+            $table->foreignId('utilisateur_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('morceau_id')->constrained('morceaux')->onDelete('cascade');
             
             // Attributs spécifiques portés par l'association
