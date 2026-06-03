@@ -9,4 +9,14 @@ class Morceau extends Model
 {
     /** @use HasFactory<\Database\Factories\MorceauFactory> */
     use HasFactory;
+
+    public function styles(): BelongsToMany
+    {
+        return $this->belongsToMany(Style::class);
+    }
+
+    public function playlists(): BelongsToMany
+    {
+        return $this->belongsToMany(Playlist::class);
+    }
 }
