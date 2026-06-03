@@ -11,8 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('morceaus', function (Blueprint $table) {
+        Schema::create('morceaux', function (Blueprint $table) {
             $table->id();
+            $table->string('titre');
+            $table->integer('duree'); // En secondes
+            $table->decimal('prix', 5, 2)->default(0.00); // Ex: 1.29 (0.00 = gratuit)
+            
+            // Clé étrangère pointant vers 'id' de la table 'albums'
+            $table->foreignId('album_id')->constrained('albums')->onDelete('cascade');
             $table->timestamps();
         });
     }

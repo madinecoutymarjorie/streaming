@@ -12,7 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('achats', function (Blueprint $table) {
-            $table->id();
+            $table->id(); // Optionnel mais recommandé pour un historique
+            $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cascade');
+            $table->foreignId('morceau_id')->constrained('morceaux')->onDelete('cascade');
+            
+            // Attributs spécifiques portés par l'association
+            $table->decimal('prix_paye', 5, 2); // Sauvegarde le prix à l'achat
+            $table->timestamp('date_achat')->useCurrent(); // Date de la transaction
+            
             $table->timestamps();
         });
     }

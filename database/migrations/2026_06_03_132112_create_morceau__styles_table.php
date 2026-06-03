@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('artistes', function (Blueprint $table) {
-            $table->id(); // Crée automatiquement la clé primaire "id"
-            $table->string('nom');
-            $table->timestamps();
+        Schema::create('morceau_style', function (Blueprint $table) {
+            $table->foreignId('morceau_id')->constrained('morceaux')->onDelete('cascade');
+            $table->foreignId('style_id')->constrained('styles')->onDelete('cascade');
+            $table->primary(['morceau_id', 'style_id']);
         });
     }
 
@@ -23,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('artistes');
+        Schema::dropIfExists('morceau__styles');
     }
 };

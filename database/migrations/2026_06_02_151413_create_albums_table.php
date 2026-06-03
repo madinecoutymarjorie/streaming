@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('albums', function (Blueprint $table) {
             $table->id();
+            $table->string('titre');
+            $table->integer('annee');
+            
+            // Clé étrangère pointant vers 'id' de la table 'artistes'
+            $table->foreignId('artiste_id')->constrained('artistes')->onDelete('cascade');
             $table->timestamps();
         });
     }
