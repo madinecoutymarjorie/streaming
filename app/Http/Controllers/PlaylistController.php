@@ -1,18 +1,18 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Playlist;
 
-use App\Models\Morceau;
 use Illuminate\Http\Request;
 
-class MorceauController extends Controller
+class PlaylistController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return response()->json(Morceau::all());
+        return response()->json(Playlist::all());
     }
 
     /**
@@ -26,7 +26,7 @@ class MorceauController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Morceau $morceau)
+    public function show(string $id)
     {
         //
     }
@@ -34,7 +34,7 @@ class MorceauController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Morceau $morceau)
+    public function update(Request $request, string $id)
     {
         //
     }
@@ -42,7 +42,7 @@ class MorceauController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Morceau $morceau)
+    public function destroy(string $id)
     {
         //
     }

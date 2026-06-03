@@ -2,7 +2,74 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+use App\Http\Controllers\{UserController,PlaylistController,MorceauController};
+use App\Models\User;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+
+Route::middleware('auth:sanctum')->group(function() {
+    Route::get('/user', [UserController::class, 'show']);
+    Route::post('/user/logout', function(Request $request) {
+		auth()->user()->tokens()->delete();
+	});
+	Route::get('/playlists/{id}', [PlaylistController::class, "show"])->whereNumber('id');
+    Route::get('/morceaux', [MorceauController::class, "show"]);
+	Route::post('/morceaux',[MorceauController::class,"store"]);
+});
+
+/*
+|--------------------------------------------------------------------------
+|Create an account.
+|--------------------------------------------------------------------------
+|
+*/
+Route::post('/register', [UserController::class, 'store']);
+
+/*
+|--------------------------------------------------------------------------
+|Log in.
+|--------------------------------------------------------------------------
+|
+*/
+
+Route::post('/login', function(Request $request) {
+	$request->validate([
+		'email' => 'required|email|max:50',
+		'password' => 'required|string|min:8',
+	]);
+	try {
+		$user = User::where('email', $request->email)->first();
+		if(!$user || !Hash::check($request->password, $user->password)) {
+			throw ValidationException::withMessages([
+				'email' => 'The provided credentials are erroneous.'
+			]);
+		}
+		return $user->createToken('auth_token')->plainTextToken;
+	}
+	catch(\Illuminate\Database\QueryException $e) {
+		Log::error('Erreur accès base de données');
+		return response()->json([
+			'message' => 'Ressource indisponible.'], 500);
+	}
+});
+
+/*
+|--------------------------------------------------------------------------
+|api/billets
+|list blog posts.
+|--------------------------------------------------------------------------
+|
+*/ 
+Route::get('/playlists', [PlaylistController::class, "index"]);
