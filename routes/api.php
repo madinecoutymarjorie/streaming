@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 
-use App\Http\Controllers\{UserController,PlaylistController,MorceauController};
+use App\Http\Controllers\{UserController,PlaylistController,MorceauController, AchatController};
 use App\Models\User;
 
 /*
@@ -25,7 +25,6 @@ Route::middleware('auth:sanctum')->group(function() {
 		auth()->user()->tokens()->delete();
 	});
 	Route::get('/playlists/{id}', [PlaylistController::class, "show"])->whereNumber('id');
-    Route::get('/morceaux', [MorceauController::class, "show"]);
 	Route::post('/morceaux',[MorceauController::class,"store"]);
 });
 
@@ -71,5 +70,8 @@ Route::post('/login', function(Request $request) {
 |list blog posts.
 |--------------------------------------------------------------------------
 |
-*/ 
+*/
+Route::get('/morceaux', [MorceauController::class, "index"]);
 Route::get('/playlists', [PlaylistController::class, "index"]);
+Route::get('/achats', [AchatController::class, 'index']);
+

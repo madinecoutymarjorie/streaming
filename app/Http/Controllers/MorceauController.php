@@ -10,9 +10,15 @@ class MorceauController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Morceau::all());
+        $type = $request->type;
+
+        if ($type == 'free') {
+            return Morceau::where('prix',0)->get();
+        }
+
+        return Morceau::where('prix','>',0)->get();
     }
 
     /**

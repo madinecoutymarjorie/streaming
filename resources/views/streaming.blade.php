@@ -70,7 +70,7 @@
 
             try {
                 // Appel AJAX à ton API Laravel
-                const response = await fetch(${API_BASE_URL}/tracks?type=${type}, {
+                const response = await fetch(`/api/morceaux?type=${type}`, {
                     method: 'GET',
                     headers: getHeaders()
                 });
@@ -86,24 +86,21 @@
                 }
 
                 tracks.forEach(track => {
+
                     display.innerHTML += `
-                        <div class="bg-gray-800 p-5 rounded-lg shadow-lg hover:bg-gray-750 transition">
-                            <h3 class="text-xl font-semibold">${track.title}</h3>
-                            <p class="text-gray-400 text-sm">Artiste : ${track.album.artist.name}</p>
-                            <p class="text-gray-400 text-sm">Album : ${track.album.title}</p>
-                            <div class="text-xs text-gray-500 my-2">Durée : ${track.duration}s | Styles : ${track.styles.join(', ')}</div>
-                            <div class="flex justify-between items-center mt-4">
-                                <span class="text-green-400 font-bold">${track.price == 0 ? 'Gratuit' : track.price + ' €'}</span>
-                                ${track.price > 0 ? 
-                                    <button onclick="buyTrack(${track.id})" class="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-500">Acheter</button> 
-                                    : <button class="bg-green-600 text-white text-xs px-3 py-1 rounded">Écouter</button>
-                                }
-                            </div>
+                        <div class="bg-gray-800 p-4 rounded">
+                            <h3>${track.titre}</h3>
+                            <p>${track.prix} €</p>
                         </div>
                     `;
+
                 });
             } catch (error) {
-                display.innerHTML = <p class="text-red-500">Erreur lors de la récupération des données.</p>;
+                display.innerHTML = `
+                    <p class="text-red-500">
+                        Erreur lors de la récupération des données.
+                    </p>
+                `;
             }
         }
 
@@ -112,7 +109,7 @@
             if (!isLoggedIn) return alert("Connectez-vous pour acheter ce morceau.");
             
             try {
-                const response = await fetch(${API_BASE_URL}/purchases, {
+                const response = await fetch(`/api/achats`, {
                     method: 'POST',
                     headers: getHeaders(),
                     body: JSON.stringify({ track_id: trackId })
@@ -131,18 +128,44 @@
 
         // 3. Charger les Playlists
         async function loadPlaylists() {
-            if (!isLoggedIn) return alert("Veuillez vous connecter pour voir vos playlists.");
-            // Logique fetch similaire vers ${API_BASE_URL}/playlists
-            document.getElementById('content-title').innerText = "Mes Playlists";
-            document.getElementById('content-display').innerHTML = "<p class='text-gray-400'>Fonctionnalité Playlists (Appel à /api/playlists)</p>";
+
+            const response = await fetch('/api/playlists');
+
+            const playlists = await response.json();
+
+            let html = '';
+
+            playlists.forEach(playlist => {
+                html += `
+                    <div class="bg-gray-800 p-4 rounded">
+                        <h3>${playlist.titre}</h3>
+                    </div>
+                `;
+            });
+
+            document.getElementById('content-title').innerText = 'Mes Playlists';
+            document.getElementById('content-display').innerHTML = html;
         }
 
         // 4. Charger la Facturation
         async function loadInvoices() {
             if (!isLoggedIn) return alert("Veuillez vous connecter pour voir vos factures.");
-            // Logique fetch similaire vers ${API_BASE_URL}/invoices ou /purchases
-            document.getElementById('content-title').innerText = "Mes Factures";
-            document.getElementById('content-display').innerHTML = "<p class='text-gray-400'>Fonctionnalité Factures (Appel à /api/purchases)</p>";
+            const response = await fetch('/api/achats');
+            const achats = await response.json();
+
+            let html = '';
+
+            achats.forEach(achat => {
+                html += `
+                    <div class="bg-gray-800 p-4 rounded">
+                        <p>Prix payé : ${achat.prix_paye} €</p>
+                        <p>Date : ${achat.date_achat}</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById('content-title').innerText = 'Mes Achats';
+            document.getElementById('content-display').innerHTML = html;
         }
 
         // Gestionnaire de connexion fictif pour la démo
