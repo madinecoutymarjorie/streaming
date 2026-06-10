@@ -12,13 +12,20 @@ class MorceauController extends Controller
      */
     public function index(Request $request)
     {
-        $type = $request->type;
+        $type = $request->query('type');
 
-        if ($type == 'free') {
-            return Morceau::where('prix',0)->get();
+        // Cas 1 : Demande de morceaux Premium
+        if ($type === 'premium') {
+            // On vérifie si le token Sanctum est présent et valide
+            if (!auth('sanctum')->user()) {
+                return response()->json(['message' => 'Accès refusé.'], 401);
+            }
+            return response()->json(Morceau::where('prix', '>', 0)->get());
         }
 
-        return Morceau::where('prix','>',0)->get();
+        // Cas 2 : Demande de morceaux Gratuits (ou par défaut)
+        // Remplace 'free' par 'gratuit' selon ce que tu as écrit en BDD
+        return response()->json(Morceau::where('prix', 0)->get());
     }
 
     /**

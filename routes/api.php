@@ -7,6 +7,9 @@ use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\{UserController,PlaylistController,MorceauController, AchatController};
 use App\Models\User;
 
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -24,9 +27,18 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::post('/user/logout', function(Request $request) {
 		auth()->user()->tokens()->delete();
 	});
+
+	Route::get('/playlists', [PlaylistController::class, "index"]);
 	Route::get('/playlists/{id}', [PlaylistController::class, "show"])->whereNumber('id');
+
 	Route::post('/morceaux',[MorceauController::class,"store"]);
+	Route::get('/morceaux/premium', [MorceauController::class, 'getPremiumTracks']);
+
+	Route::get('/achats', [AchatController::class, 'index']);
+    Route::post('/achats', [AchatController::class, 'store']);
 });
+
+Route::get('/morceaux', [MorceauController::class, "index"]);
 
 /*
 |--------------------------------------------------------------------------
@@ -71,7 +83,4 @@ Route::post('/login', function(Request $request) {
 |--------------------------------------------------------------------------
 |
 */
-Route::get('/morceaux', [MorceauController::class, "index"]);
-Route::get('/playlists', [PlaylistController::class, "index"]);
-Route::get('/achats', [AchatController::class, 'index']);
 

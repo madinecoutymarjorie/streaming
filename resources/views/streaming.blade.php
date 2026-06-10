@@ -41,19 +41,20 @@
         
         // Simulation d'un token utilisateur (à remplacer par ton vrai système d'auth ex: Sanctum/Passport)
         let isLoggedIn = false;
-        let mockToken = "Bearer SIMULATED_TOKEN_12345";
+        //let mockToken = "Bearer SIMULATED_TOKEN_12345";
+        let authToken = "";
 
         // Headers à envoyer à l'API
         function getHeaders() {
-            const headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            };
-            if (isLoggedIn) {
-                headers['Authorization'] = mockToken;
-            }
-            return headers;
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
+        if (isLoggedIn && authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
         }
+        return headers;
+    }
 
         // 1. Charger les musiques (Gratuites ou Premium)
         async function loadTracks(type) {
@@ -69,8 +70,7 @@
             display.innerHTML = "<p class='text-gray-400'>Chargement...</p>";
 
             try {
-                // Appel AJAX à ton API Laravel
-                const response = await fetch(`/api/morceaux?type=${type}`, {
+                const response = await fetch(`${API_BASE_URL}/morceaux?type=${type}`, {
                     method: 'GET',
                     headers: getHeaders()
                 });
@@ -78,7 +78,7 @@
                 if (!response.ok) throw new Error('Erreur réseau');
                 const tracks = await response.json();
 
-                display.innerHTML = ''; // On vide le chargement
+                display.innerHTML = ''; 
                 
                 if(tracks.length === 0) {
                     display.innerHTML = "<p class='text-gray-400'>Aucun morceau disponible.</p>";
@@ -86,21 +86,23 @@
                 }
 
                 tracks.forEach(track => {
+                    // Ajout d'un bouton d'achat si le morceau est payant (> 0€)
+                    const buttonHtml = track.prix > 0 
+                        ? `<button onclick="buyTrack(${track.id})" class="mt-2 w-full bg-green-500 text-black text-xs font-bold py-1 rounded hover:bg-green-400">Acheter</button>` 
+                        : '';
 
                     display.innerHTML += `
-                        <div class="bg-gray-800 p-4 rounded">
-                            <h3>${track.titre}</h3>
-                            <p>${track.prix} €</p>
+                        <div class="bg-gray-800 p-4 rounded flex flex-col justify-between h-full">
+                            <div>
+                                <h3 class="font-bold text-lg">${track.titre}</h3>
+                                <p class="text-gray-400">${track.prix} €</p>
+                            </div>
+                            ${buttonHtml}
                         </div>
                     `;
-
                 });
             } catch (error) {
-                display.innerHTML = `
-                    <p class="text-red-500">
-                        Erreur lors de la récupération des données.
-                    </p>
-                `;
+                display.innerHTML = `<p class="text-red-500">Erreur lors de la récupération des données.</p>`;
             }
         }
 
@@ -109,7 +111,7 @@
             if (!isLoggedIn) return alert("Connectez-vous pour acheter ce morceau.");
             
             try {
-                const response = await fetch(`/api/achats`, {
+                const response = await fetch(`${API_BASE_URL}/achats`, {
                     method: 'POST',
                     headers: getHeaders(),
                     body: JSON.stringify({ track_id: trackId })
@@ -150,31 +152,114 @@
         // 4. Charger la Facturation
         async function loadInvoices() {
             if (!isLoggedIn) return alert("Veuillez vous connecter pour voir vos factures.");
-            const response = await fetch('/api/achats');
-            const achats = await response.json();
-
-            let html = '';
-
-            achats.forEach(achat => {
-                html += `
-                    <div class="bg-gray-800 p-4 rounded">
-                        <p>Prix payé : ${achat.prix_paye} €</p>
-                        <p>Date : ${achat.date_achat}</p>
-                    </div>
-                `;
-            });
-
+            
             document.getElementById('content-title').innerText = 'Mes Achats';
-            document.getElementById('content-display').innerHTML = html;
+            const display = document.getElementById('content-display');
+            display.innerHTML = "<p class='text-gray-400'>Chargement...</p>";
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/achats`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) throw new Error();
+                const achats = await response.json();
+
+                let html = '';
+                if(achats.length === 0) {
+                    html = "<p class='text-gray-400'>Aucun achat effectué.</p>";
+                } else {
+                    achats.forEach(achat => {
+                        html += `
+                            <div class="bg-gray-800 p-4 rounded">
+                                <p class="font-medium text-green-500">Prix payé : ${achat.prix_paye} €</p>
+                                <p class="text-sm text-gray-400">Date : ${achat.date_achat}</p>
+                            </div>
+                        `;
+                    });
+                }
+                display.innerHTML = html;
+            } catch (error) {
+                display.innerHTML = "<p class='text-red-500'>Erreur de chargement des factures.</p>";
+            }
+        }
+
+        async function loadPlaylists() {
+            if (!isLoggedIn) return alert("Veuillez vous connecter pour voir vos playlists.");
+            
+            document.getElementById('content-title').innerText = 'Mes Playlists';
+            const display = document.getElementById('content-display');
+            display.innerHTML = "<p class='text-gray-400'>Chargement...</p>";
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/playlists`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) throw new Error();
+                const playlists = await response.json();
+                
+                let html = '';
+                if(playlists.length === 0) {
+                    html = "<p class='text-gray-400'>Aucune playlist trouvée.</p>";
+                } else {
+                    playlists.forEach(playlist => {
+                        html += `
+                            <div class="bg-gray-800 p-4 rounded">
+                                <h3 class="font-bold">${playlist.titre}</h3>
+                            </div>
+                        `;
+                    });
+                }
+                display.innerHTML = html;
+            } catch (error) {
+                display.innerHTML = "<p class='text-red-500'>Erreur de chargement des playlists.</p>";
+            }
         }
 
         // Gestionnaire de connexion fictif pour la démo
-        function toggleAuth() {
-            isLoggedIn = !isLoggedIn;
+        async function toggleAuth() {
+            if (isLoggedIn) {
+                // Mode déconnexion
+                isLoggedIn = false;
+                authToken = "";
+                updateAuthUI();
+                loadTracks('free');
+            } else {
+                // Mode connexion : On demande les identifiants
+                const email = prompt("Entrez votre email :", "user@example.com");
+                const password = prompt("Entrez votre mot de passe :");
+
+                if(!email || !password) return;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ email: email, password: password })
+                    });
+
+                    if(response.ok) {
+                        // Ta route /login renvoie directement la chaîne du token textuel
+                        authToken = await response.text(); 
+                        isLoggedIn = true;
+                        updateAuthUI();
+                        loadTracks('premium'); // Charge directement les musiques premium une fois connecté !
+                    } else {
+                        alert("Identifiants incorrects ou erreur serveur.");
+                    }
+                } catch (error) {
+                    alert("Impossible de joindre le serveur d'authentification.");
+                }
+            }
+        }
+
+        function updateAuthUI() {
             document.getElementById('auth-status').innerText = isLoggedIn ? "Connecté" : "Déconnecté";
             document.getElementById('auth-status').className = isLoggedIn ? "text-green-500" : "text-red-500";
             document.getElementById('btn-auth').innerText = isLoggedIn ? "Se déconnecter" : "Se connecter";
-            loadTracks('free');
         }
 
         // Charger les musiques gratuites au démarrage
