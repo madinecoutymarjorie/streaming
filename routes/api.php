@@ -30,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function() {
 
 	Route::get('/playlists', [PlaylistController::class, "index"]);
 	Route::get('/playlists/{id}', [PlaylistController::class, "show"])->whereNumber('id');
+	Route::post('/playlists', [PlaylistController::class, "store"]);
 
 	Route::post('/morceaux',[MorceauController::class,"store"]);
 	Route::get('/morceaux/premium', [MorceauController::class, 'getPremiumTracks']);

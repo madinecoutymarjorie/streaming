@@ -28,6 +28,11 @@ class MorceauController extends Controller
         return response()->json(Morceau::where('prix', 0)->get());
     }
 
+    public function getPremiumTracks()
+    {
+        return response()->json(Morceau::where('prix', '>', 0)->get());
+    }
+
     /**
      * Store a newly created resource in storage.
      */

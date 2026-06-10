@@ -12,6 +12,7 @@
         <aside class="w-64 bg-gray-950 p-6 flex flex-col justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-green-500 mb-8">PolyStream</h1>
+                <button onclick="createNewPlaylist()" class="block w-full text-left text-sm text-green-400 hover:text-green-300 font-medium mt-4">+ Nouvelle Playlist</button>
                 <nav class="space-y-4">
                     <button onclick="loadTracks('free')" class="block w-full text-left hover:text-green-500 font-medium">🎵 Musiques Gratuites</button>
                     <button onclick="loadTracks('premium')" class="block w-full text-left hover:text-green-500 font-medium">💳 Musiques Premium</button>
@@ -113,40 +114,87 @@
             try {
                 const response = await fetch(`${API_BASE_URL}/achats`, {
                     method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify({ track_id: trackId })
+                    headers: getHeaders(), // Injecte le Content-Type et surtout le Bearer Token
+                    body: JSON.stringify({ track_id: trackId }) // Envoie la clé attendue par le validateur Laravel
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    alert("Morceau acheté avec succès !");
-                    loadTracks('premium');
+                    alert(data.message); // Affiche "Morceau acheté avec succès !"
+                    loadTracks('premium'); // Rafraîchit l'affichage
                 } else {
-                    alert("Erreur lors de l'achat.");
+                    // Affiche le message d'erreur personnalisé de Laravel (ex: "Vous possédez déjà ce morceau !")
+                    alert(data.message || "Erreur lors de l'achat.");
                 }
             } catch (error) {
                 console.error(error);
+                alert("Impossible de contacter le serveur d'achats.");
             }
         }
 
         // 3. Charger les Playlists
         async function loadPlaylists() {
-
-            const response = await fetch('/api/playlists');
-
-            const playlists = await response.json();
-
-            let html = '';
-
-            playlists.forEach(playlist => {
-                html += `
-                    <div class="bg-gray-800 p-4 rounded">
-                        <h3>${playlist.titre}</h3>
-                    </div>
-                `;
-            });
-
+            if (!isLoggedIn) return alert("Veuillez vous connecter pour voir vos playlists.");
+            
             document.getElementById('content-title').innerText = 'Mes Playlists';
-            document.getElementById('content-display').innerHTML = html;
+            const display = document.getElementById('content-display');
+            display.innerHTML = "<p class='text-gray-400'>Chargement...</p>";
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/playlists`, {
+                    method: 'GET',
+                    headers: getHeaders() // <-- Envoie le token !
+                });
+
+                if (!response.ok) throw new Error();
+                const playlists = await response.json();
+                
+                let html = '';
+                if(playlists.length === 0) {
+                    html = "<p class='text-gray-400'>Aucune playlist trouvée.</p>";
+                } else {
+                    playlists.forEach(playlist => {
+                        html += `
+                            <div class="bg-gray-800 p-4 rounded">
+                                <h3 class="font-bold">${playlist.titre}</h3>
+                            </div>
+                        `;
+                    });
+                }
+                display.innerHTML = html;
+            } catch (error) {
+                display.innerHTML = "<p class='text-red-500'>Erreur de chargement des playlists.</p>";
+            }
+        }
+
+        // 5. Créer une nouvelle playlist
+        async function createNewPlaylist() {
+            if (!isLoggedIn) return alert("Veuillez vous connecter pour créer une playlist.");
+
+            // On demande le nom de la playlist via un prompt
+            const title = prompt("Entrez le titre de votre nouvelle playlist :");
+            if (!title || title.trim() === "") return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/playlists`, {
+                    method: 'POST',
+                    headers: getHeaders(), // Contient Content-Type: application/json ET le Token Bearer
+                    body: JSON.stringify({ titre: title })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message);
+                    // On recharge la vue des playlists pour voir la nouvelle apparaître !
+                    loadPlaylists(); 
+                } else {
+                    alert("Erreur lors de la création : " + (data.message || "Erreur inconnue"));
+                }
+            } catch (error) {
+                alert("Impossible de joindre le serveur.");
+            }
         }
 
         // 4. Charger la Facturation
@@ -185,39 +233,6 @@
             }
         }
 
-        async function loadPlaylists() {
-            if (!isLoggedIn) return alert("Veuillez vous connecter pour voir vos playlists.");
-            
-            document.getElementById('content-title').innerText = 'Mes Playlists';
-            const display = document.getElementById('content-display');
-            display.innerHTML = "<p class='text-gray-400'>Chargement...</p>";
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/playlists`, {
-                    method: 'GET',
-                    headers: getHeaders()
-                });
-
-                if (!response.ok) throw new Error();
-                const playlists = await response.json();
-                
-                let html = '';
-                if(playlists.length === 0) {
-                    html = "<p class='text-gray-400'>Aucune playlist trouvée.</p>";
-                } else {
-                    playlists.forEach(playlist => {
-                        html += `
-                            <div class="bg-gray-800 p-4 rounded">
-                                <h3 class="font-bold">${playlist.titre}</h3>
-                            </div>
-                        `;
-                    });
-                }
-                display.innerHTML = html;
-            } catch (error) {
-                display.innerHTML = "<p class='text-red-500'>Erreur de chargement des playlists.</p>";
-            }
-        }
 
         // Gestionnaire de connexion fictif pour la démo
         async function toggleAuth() {
@@ -243,7 +258,8 @@
 
                     if(response.ok) {
                         // Ta route /login renvoie directement la chaîne du token textuel
-                        authToken = await response.text(); 
+                        authToken = await response.text();
+                        console.log("Mon token précieux :", authToken); // afficher le token
                         isLoggedIn = true;
                         updateAuthUI();
                         loadTracks('premium'); // Charge directement les musiques premium une fois connecté !

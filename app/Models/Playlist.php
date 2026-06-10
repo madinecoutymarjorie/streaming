@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Playlist extends Model
 {
     use HasFactory;
+    protected $table = 'playlists';
 
     public function morceaux(): BelongsToMany
     {
